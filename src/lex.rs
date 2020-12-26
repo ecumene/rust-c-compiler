@@ -40,10 +40,7 @@ trait IsDelimiter {
 
 impl IsDelimiter for char {
     fn is_delimiter(&self) -> bool {
-        match self {
-            ' ' | '(' | ')' | '}' | '{' | ';' => true,
-            _ => false,
-        }
+        matches!(self, ' ' | '(' | ')' | '}' | '{' | ';')
     }
 }
 
@@ -56,7 +53,7 @@ impl Tokenize for &str {
         let mut chars = self.chars().peekable();
         let mut out = vec![];
         loop {
-            if !chars.peek().is_some() {
+            if chars.peek().is_none() {
                 return out
                     .iter()
                     .filter_map(|token: &String| Token::from_string(token.clone()))
@@ -66,7 +63,9 @@ impl Tokenize for &str {
                 .take_while_ref(|character| !character.is_delimiter())
                 .collect::<String>();
             out.push(token);
-            out.push(chars.next().unwrap().to_string());
+            if chars.peek().is_some() {
+                out.push(chars.next().unwrap().to_string());
+            }
         }
     }
 }
@@ -92,6 +91,9 @@ int main() {
             Token::Semicolon,
             Token::CloseBrace,
         ];
+        assert_eq!(input.tokenize(), output);
+
+        let input = "int main() {\n  return 2;\n}\n";
         assert_eq!(input.tokenize(), output);
     }
 }

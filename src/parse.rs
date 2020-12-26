@@ -2,16 +2,19 @@ use crate::lex::*;
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
-struct Const(i32);
+pub struct Const(pub i32);
+
 #[derive(Debug, PartialEq)]
-struct Return(Const);
+pub struct Return(pub Const);
+
 #[derive(Debug, PartialEq)]
-struct Fun(String, Return);
+pub struct Fun(pub String, pub Return);
+
 #[derive(Debug, PartialEq)]
-struct Prog(Fun);
+pub struct Prog(pub Fun);
 
 #[derive(Debug)]
-struct ParseError<'a>(&'a Token);
+pub struct ParseError<'a>(&'a Token);
 
 impl<'a> Const {
     fn new<I>(tokens: &mut I) -> Result<Const, ParseError<'a>>
