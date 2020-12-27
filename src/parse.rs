@@ -5,39 +5,58 @@ use std::str::FromStr;
 pub struct Const(pub i32);
 
 #[derive(Debug, PartialEq)]
-pub struct Return(pub Const);
+pub struct Return;
 
 #[derive(Debug, PartialEq)]
-pub struct Fun(pub String, pub Return);
+pub struct Fun(pub String);
 
 #[derive(Debug, PartialEq)]
-pub struct Prog(pub Fun);
+pub struct Prog;
+
+#[derive(Debug, PartialEq)]
+pub struct ParseNode<T> {
+    pub children: Vec<ParseNode<T>>,
+}
 
 #[derive(Debug)]
 pub struct ParseError<'a>(&'a Token);
 
+impl ParseNode {
+    fn new(entry: GrammarItem) -> Self {
+        ParseNode {
+            entry,
+            children: Vec::new(),
+        }
+    }
+
+    fn add(self, node: ParseNode) -> Self {
+        self.children.push(node);
+        self
+    }
+}
+
 impl<'a> Const {
-    fn new<I>(tokens: &mut I) -> Result<Const, ParseError<'a>>
+    fn new<I>(tokens: &mut I) -> Result<ParseNode, ParseError<'a>>
     where
         I: Iterator<Item = &'a Token>,
     {
         let int_token = tokens.next().expect("No integer keyword.");
         match int_token {
-            Token::IntLiteral(number) => Ok(Const(*number)),
+            Token::IntLiteral(number) => Ok(ParseNode::new(GrammarItem::Const(number))),
             _ => Err(ParseError(int_token)),
         }
     }
 }
 
 impl<'a> Return {
-    fn new<I>(tokens: &mut I) -> Result<Return, ParseError<'a>>
+    fn new<I>(tokens: &mut I) -> Result<ParseNode, ParseError<'a>>
     where
         I: Iterator<Item = &'a Token>,
     {
         tokens
             .next()
             .expect_to_be(Token::Return, "No return keyword.")?;
-        let constant_def = Ok(Return(Const::new(tokens)?));
+        let constant_def = Ok(ParseNode::new(GrammarItem::Return).add(Const::new(tokens)?));
         tokens
             .next()
             .expect_to_be(Token::Semicolon, "No semicolon declared.")?;
@@ -46,7 +65,7 @@ impl<'a> Return {
 }
 
 impl<'a> Fun {
-    fn new<I>(tokens: &mut I) -> Result<Fun, ParseError<'a>>
+    fn new<I>(tokens: &mut I) -> Result<ParseNode, ParseError<'a>>
     where
         I: Iterator<Item = &'a Token>,
     {
@@ -64,7 +83,12 @@ impl<'a> Fun {
             .next()
             .expect_to_be(Token::OpenBrace, "No open brace declared.")?;
         let fun_def = match identifier {
-            Token::Identifier(id) => Ok(Fun(id.to_owned(), Return::new(tokens)?)),
+            Token::Identifier(id) => Ok(ParseNode::new(GrammarItem::Fn(
+                id.to_owned(),
+            )
+        
+                ParseNode::New(Return::new(tokens)?),
+        )),
             _ => Err(ParseError(identifier)),
         };
         tokens
