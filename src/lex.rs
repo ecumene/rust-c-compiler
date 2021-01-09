@@ -5,6 +5,9 @@ pub enum Operator {
     Negation,
     LogicalNegation,
     BitwiseCompliment,
+    Addition,
+    Multiplication,
+    Division,
 }
 
 #[derive(Debug, PartialEq)]
@@ -32,6 +35,9 @@ impl Token {
             ";" => Some(Token::Semicolon),
             "int" => Some(Token::Int),
             "-" => Some(Token::Op(Operator::Negation)),
+            "+" => Some(Token::Op(Operator::Addition)),
+            "*" => Some(Token::Op(Operator::Multiplication)),
+            "/" => Some(Token::Op(Operator::Division)),
             "~" => Some(Token::Op(Operator::BitwiseCompliment)),
             "!" => Some(Token::Op(Operator::LogicalNegation)),
             "return" => Some(Token::Return),
@@ -108,6 +114,14 @@ int main() {
         assert_eq!(input.tokenize(), output);
 
         let input = "-~!";
+        let output = vec![
+            Token::Op(Operator::Negation),
+            Token::Op(Operator::BitwiseCompliment),
+            Token::Op(Operator::LogicalNegation),
+        ];
+        assert_eq!(input.tokenize(), output);
+
+        let input = "+-*/";
         let output = vec![
             Token::Op(Operator::Negation),
             Token::Op(Operator::BitwiseCompliment),

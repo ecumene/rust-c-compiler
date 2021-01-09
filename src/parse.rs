@@ -5,6 +5,8 @@ use std::str::FromStr;
 pub enum Expression {
     Const(i32),
     UnOp(Operator, Box<Expression>),
+    MulDivOp(Operator, Box<Expression>, Box<Expression>),
+    AddNegOp(Operator, Box<Expression>, Box<Expression>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -27,10 +29,18 @@ impl<'a> Expression {
         let int_token = tokens.next().expect("No integer keyword.");
         match int_token {
             Token::IntLiteral(number) => Ok(Expression::Const(*number)),
-            Token::Op(operator) => Ok(Expression::UnOp(
-                *operator,
-                Box::new(Expression::new(tokens)?),
-            )),
+            Token::Op(operator) => match operator {
+                Operator::Negation | Operator::LogicalNegation | Operator::BitwiseCompliment => Ok(
+                    Expression::UnOp(*operator, Box::new(Expression::new(tokens)?)),
+                ),
+                Operator::Addition | Operator::Multiplication | Operator::Division => {
+                    Ok(Expression::BinOp(
+                        *operator,
+                        Box::new(Expression::new(tokens)?),
+                        Box::new(Expression::new(tokens)?),
+                    ))
+                }
+            },
             _ => Err(ParseError(int_token)),
         }
     }
