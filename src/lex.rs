@@ -1,5 +1,12 @@
 use itertools::Itertools;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Operator {
+    Negation,
+    LogicalNegation,
+    BitwiseCompliment,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Token {
     OpenBrace,
@@ -9,6 +16,7 @@ pub enum Token {
     Semicolon,
     Int,
     Return,
+    Op(Operator),
     Identifier(String),
     IntLiteral(i32),
 }
@@ -23,6 +31,9 @@ impl Token {
             "}" => Some(Token::CloseBrace),
             ";" => Some(Token::Semicolon),
             "int" => Some(Token::Int),
+            "-" => Some(Token::Op(Operator::Negation)),
+            "~" => Some(Token::Op(Operator::BitwiseCompliment)),
+            "!" => Some(Token::Op(Operator::LogicalNegation)),
             "return" => Some(Token::Return),
             _ => {
                 if let Ok(number) = input.parse::<i32>() {
@@ -40,7 +51,7 @@ trait IsDelimiter {
 
 impl IsDelimiter for char {
     fn is_delimiter(&self) -> bool {
-        matches!(self, ' ' | '(' | ')' | '}' | '{' | ';')
+        matches!(self, ' ' | '!' | '~' | '-' | '(' | ')' | '}' | '{' | ';')
     }
 }
 
@@ -94,6 +105,14 @@ int main() {
         assert_eq!(input.tokenize(), output);
 
         let input = "int main() {\n  return 2;\n}\n";
+        assert_eq!(input.tokenize(), output);
+
+        let input = "-~!";
+        let output = vec![
+            Token::Op(Operator::Negation),
+            Token::Op(Operator::BitwiseCompliment),
+            Token::Op(Operator::LogicalNegation),
+        ];
         assert_eq!(input.tokenize(), output);
     }
 }

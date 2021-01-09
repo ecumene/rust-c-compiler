@@ -2,10 +2,13 @@ use crate::lex::*;
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
-pub struct Const(pub i32);
+pub enum Expression {
+    Const(i32),
+    UnOp(Operator, Box<Expression>),
+}
 
 #[derive(Debug, PartialEq)]
-pub struct Return(pub Const);
+pub struct Return(pub Expression);
 
 #[derive(Debug, PartialEq)]
 pub struct Fun(pub String, pub Return);
@@ -16,14 +19,18 @@ pub struct Prog(pub Fun);
 #[derive(Debug)]
 pub struct ParseError<'a>(&'a Token);
 
-impl<'a> Const {
-    fn new<I>(tokens: &mut I) -> Result<Const, ParseError<'a>>
+impl<'a> Expression {
+    fn new<I>(tokens: &mut I) -> Result<Expression, ParseError<'a>>
     where
         I: Iterator<Item = &'a Token>,
     {
         let int_token = tokens.next().expect("No integer keyword.");
         match int_token {
-            Token::IntLiteral(number) => Ok(Const(*number)),
+            Token::IntLiteral(number) => Ok(Expression::Const(*number)),
+            Token::Op(operator) => Ok(Expression::UnOp(
+                *operator,
+                Box::new(Expression::new(tokens)?),
+            )),
             _ => Err(ParseError(int_token)),
         }
     }
@@ -37,7 +44,7 @@ impl<'a> Return {
         tokens
             .next()
             .expect_to_be(Token::Return, "No return keyword.")?;
-        let constant_def = Ok(Return(Const::new(tokens)?));
+        let constant_def = Ok(Return(Expression::new(tokens)?));
         tokens
             .next()
             .expect_to_be(Token::Semicolon, "No semicolon declared.")?;
@@ -108,7 +115,7 @@ mod tests {
 int main() {
     return 2;
 }";
-        let output = Prog(Fun("main".to_string(), Return(Const(2))));
+        let output = Prog(Fun("main".to_string(), Return(Expression::Const(2))));
         assert_eq!(input.parse::<Prog>().unwrap(), output);
     }
 }
